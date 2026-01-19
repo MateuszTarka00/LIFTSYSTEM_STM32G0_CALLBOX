@@ -26,7 +26,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "tim.h"
 
+#define CAN_MANAGER_TASK_DELAY_MS 		1
+#define INPUT_CHECK_TASK_DELAY_MS		20
+
+#define BUZZER_TIME_NORMAL						100 //ms
+#define BUZZER_TIME_PROGRAMING					1000 //ms
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,12 +52,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+uint8_t floorNumber = 0;
+uint8_t buttonUpState = false;
+uint8_t buttonDownState = false;
 /* USER CODE END Variables */
-/* Definitions for InputCheck */
-osThreadId_t InputCheckHandle;
-const osThreadAttr_t InputCheck_attributes = {
-  .name = "InputCheck",
+/* Definitions for InputCheckT */
+osThreadId_t InputCheckTHandle;
+const osThreadAttr_t InputCheckT_attributes = {
+  .name = "InputCheckT",
   .priority = (osPriority_t) osPriorityNormal2,
   .stack_size = 512 * 4
 };
@@ -68,7 +76,7 @@ const osThreadAttr_t CanMenagerT_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void tpdoRequester(void *argument);
+void InputCheck(void *argument);
 void CanMenager(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -164,8 +172,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of InputCheck */
-  InputCheckHandle = osThreadNew(tpdoRequester, NULL, &InputCheck_attributes);
+  /* creation of InputCheckT */
+  InputCheckTHandle = osThreadNew(InputCheck, NULL, &InputCheckT_attributes);
 
   /* creation of CanMenagerT */
   CanMenagerTHandle = osThreadNew(CanMenager, NULL, &CanMenagerT_attributes);
@@ -180,22 +188,87 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_tpdoRequester */
+/* USER CODE BEGIN Header_InputCheck */
 /**
-  * @brief  Function implementing the tpdoRequesterT thread.
+  * @brief  Function implementing the InputCheckT thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_tpdoRequester */
-void tpdoRequester(void *argument)
+/* USER CODE END Header_InputCheck */
+void InputCheck(void *argument)
 {
-  /* USER CODE BEGIN tpdoRequester */
+  /* USER CODE BEGIN InputCheck */
+  static uint8_t floorNumberTmp = 0;
+  static uint8_t programingMode = false;
+  static uint8_t programingModePrevious = false;
+  static uint8_t floorIndicator = false;
+  static uint8_t floorIndicatorPrevious = false;
+  static uint16_t buzzer_counter = 0;
+  static uint8_t buttonDownStatePrevious = 0;
+  static uint8_t buttonUpStatePrevious = 0;
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  //buzzer time decreaser
+		if(!buzzer_counter)
+		{
+			HAL_TIM_PWM_Stop(&htim17, TIM_CHANNEL_1);
+		}
+		else
+		{
+			buzzer_counter--;
+		}
+
+	  //Check if programing jumper is set
+	  programingModePrevious = programingMode;
+	  programingMode = HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin);
+
+	  //Entering or exiting programing mode will set buzzer on for 1s
+	  if(programingMode != programingModePrevious)
+	  {
+		HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+		buzzer_counter = BUZZER_TIME_PROGRAMING;
+	  }
+
+	  if(programingMode == false && programingModePrevious == true)
+	  {
+		  if(floorNumberTmp > 0)
+		  {
+			  floorNumber = floorNumberTmp - 1;
+			  floorNumberTmp = 0;
+		  }
+	  }
+
+	  if(programingMode == true)
+	  {
+		  floorIndicatorPrevious = floorIndicator;
+		  floorIndicator = HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin);
+
+		  if(floorIndicator == true && floorIndicatorPrevious == false)
+		  {
+			  floorNumberTmp++;
+		  }
+	  }
+	  else
+	  {
+		  buttonDownStatePrevious = buttonDownState;
+		  buttonUpStatePrevious = buttonUpState;
+
+		  buttonDownState = HAL_GPIO_ReadPin(BUTTON_DOWN_GPIO_Port, BUTTON_DOWN_Pin);
+		  buttonUpState = HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin);
+
+		  if((buttonUpState == true && buttonUpStatePrevious == false) ||
+		     (buttonDownState == true && buttonDownStatePrevious == false))
+		  {
+				HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+				buzzer_counter = BUZZER_TIME_NORMAL;
+		  }
+	  }
+
+
+	  osDelay(pdMS_TO_TICKS(INPUT_CHECK_TASK_DELAY_MS));
   }
-  /* USER CODE END tpdoRequester */
+  /* USER CODE END InputCheck */
 }
 
 /* USER CODE BEGIN Header_CanMenager */
@@ -208,9 +281,11 @@ void tpdoRequester(void *argument)
 void CanMenager(void *argument)
 {
   /* USER CODE BEGIN CanMenager */
+
   /* Infinite loop */
   for(;;)
   {
+
     osDelay(1);
   }
   /* USER CODE END CanMenager */

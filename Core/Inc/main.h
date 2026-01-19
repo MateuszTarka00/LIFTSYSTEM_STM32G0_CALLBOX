@@ -75,7 +75,8 @@ void Error_Handler(void);
 #define LED_DOWN_Pin GPIO_PIN_7
 #define LED_DOWN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define false 	0
+#define true	1
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
