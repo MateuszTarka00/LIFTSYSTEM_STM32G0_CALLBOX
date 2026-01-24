@@ -1,0 +1,60 @@
+/*
+ * canInputOutputDefinitions.h
+ *
+ *  Created on: 24 sty 2026
+ *      Author: mateo
+ */
+
+#ifndef INC_CANINPUTOUTPUTDEFINITIONS_H_
+#define INC_CANINPUTOUTPUTDEFINITIONS_H_
+
+#include "main.h"
+
+#define REST_INPUT 							0
+#define UP_INPUT   							1
+#define DOWN_INPUT 							2
+#define TWO_BUTTONS_INPUT 					3
+
+#define SECOND_BYTE_VALUE					0x0F
+#define FIRST_FLOOR_NUMBER_RX				0x80 //First RX byte
+
+#define FIRST_FLOOR_NUMBER_TX				0x00
+#define FIRST_FLOOR_NUMBER_ID				0x200
+
+#define DOWN_BUTTON_THIRD_BYTE_TX			0x01
+#define UP_BUTTON_THIRD_BYTE_TX				0x02
+
+#define DOWN_BUTTON_THIRD_BYTE_CONST_TX		0x01
+#define UP_BUTTON_THIRD_BYTE_CONST_TX		0x02
+
+#define DOWN_BUTTON_THIRD_BYTE_BLINK_TX		0x41
+#define UP_BUTTON_THIRD_BYTE_BLINK_TX		0x82
+
+
+
+const uint8_t inputCanLastByte[20][4] =
+{
+		{0xC3, 0xCD, 0xC4, 0},
+		{0xA8, 0xA6, 0xAF, 0},
+		{0x15, 0x1B, 0x12, 0},
+		{0x7E, 0x70, 0x79, 0},
+		{0x68, 0x66, 0x6F, 0},
+		{0x03, 0x0D, 0x04, 0},
+		{0xBE, 0xB0, 0xB9, 0},
+		{0xD5, 0xDB, 0xD2, 0},
+		{0xC9, 0xC7, 0xCE, 0},
+		{0xF9, 0xF7, 0xFE, 0},
+		{0x44, 0x4A, 0x43, 0},
+		{0x2F, 0x21, 0x28, 0},
+		{0x39, 0x37, 0x3E, 0},
+		{0x52, 0x5C, 0x55, 0},
+		{0xEF, 0xE1, 0xE8, 0},
+		{0x84, 0x8A, 0x83, 0},
+		{0x61, 0x6F, 0x66, 0},
+		{0x0A, 0x04, 0x0D, 0},
+		{0xB7, 0xB9, 0xB0, 0},
+		{0xDC, 0xD2, 0xDB, 0}
+};
+
+
+#endif /* INC_CANINPUTOUTPUTDEFINITIONS_H_ */

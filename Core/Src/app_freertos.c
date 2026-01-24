@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tim.h"
+#include "canInputOutputDefinitions.h"
 
 #define CAN_MANAGER_TASK_DELAY_MS 		1
 #define INPUT_CHECK_TASK_DELAY_MS		20
