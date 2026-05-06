@@ -28,12 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include "tim.h"
 #include "canInputOutputDefinitions.h"
+#include "buttons.h"
+#include "canManager.h"
 
-#define CAN_MANAGER_TASK_DELAY_MS 		1
-#define INPUT_CHECK_TASK_DELAY_MS		20
-
-#define BUZZER_TIME_NORMAL						100 //ms
-#define BUZZER_TIME_PROGRAMING					1000 //ms
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,23 +50,28 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-uint8_t floorNumber = 0;
-uint8_t buttonUpState = false;
-uint8_t buttonDownState = false;
+
 /* USER CODE END Variables */
-/* Definitions for InputCheckT */
-osThreadId_t InputCheckTHandle;
-const osThreadAttr_t InputCheckT_attributes = {
-  .name = "InputCheckT",
+/* Definitions for ButtonsTaskT */
+osThreadId_t ButtonsTaskTHandle;
+const osThreadAttr_t ButtonsTaskT_attributes = {
+  .name = "ButtonsTaskT",
   .priority = (osPriority_t) osPriorityNormal2,
   .stack_size = 512 * 4
 };
-/* Definitions for CanMenagerT */
-osThreadId_t CanMenagerTHandle;
-const osThreadAttr_t CanMenagerT_attributes = {
-  .name = "CanMenagerT",
+/* Definitions for CanTranciverT */
+osThreadId_t CanTranciverTHandle;
+const osThreadAttr_t CanTranciverT_attributes = {
+  .name = "CanTranciverT",
   .priority = (osPriority_t) osPriorityNormal3,
   .stack_size = 1024 * 4
+};
+/* Definitions for CanReceiverT */
+osThreadId_t CanReceiverTHandle;
+const osThreadAttr_t CanReceiverT_attributes = {
+  .name = "CanReceiverT",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 512 * 4
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,8 +79,9 @@ const osThreadAttr_t CanMenagerT_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void InputCheck(void *argument);
-void CanMenager(void *argument);
+void ButtonsTask(void *argument);
+void CanTranciver(void *argument);
+void CanReceiver(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -173,11 +176,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of InputCheckT */
-  InputCheckTHandle = osThreadNew(InputCheck, NULL, &InputCheckT_attributes);
+  /* creation of ButtonsTaskT */
+  ButtonsTaskTHandle = osThreadNew(ButtonsTask, NULL, &ButtonsTaskT_attributes);
 
-  /* creation of CanMenagerT */
-  CanMenagerTHandle = osThreadNew(CanMenager, NULL, &CanMenagerT_attributes);
+  /* creation of CanTranciverT */
+  CanTranciverTHandle = osThreadNew(CanTranciver, NULL, &CanTranciverT_attributes);
+
+  /* creation of CanReceiverT */
+  CanReceiverTHandle = osThreadNew(CanReceiver, NULL, &CanReceiverT_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -189,107 +195,63 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_InputCheck */
+/* USER CODE BEGIN Header_ButtonsTask */
 /**
-  * @brief  Function implementing the InputCheckT thread.
+  * @brief  Function implementing the ButtonsTaskT thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_InputCheck */
-void InputCheck(void *argument)
+/* USER CODE END Header_ButtonsTask */
+void ButtonsTask(void *argument)
 {
-  /* USER CODE BEGIN InputCheck */
-  static uint8_t floorNumberTmp = 0;
-  static uint8_t programingMode = false;
-  static uint8_t programingModePrevious = false;
-  static uint8_t floorIndicator = false;
-  static uint8_t floorIndicatorPrevious = false;
-  static uint16_t buzzer_counter = 0;
-  static uint8_t buttonDownStatePrevious = 0;
-  static uint8_t buttonUpStatePrevious = 0;
+  /* USER CODE BEGIN ButtonsTask */
   /* Infinite loop */
   for(;;)
   {
-	  //buzzer time decreaser
-		if(!buzzer_counter)
-		{
-			HAL_TIM_PWM_Stop(&htim17, TIM_CHANNEL_1);
-		}
-		else
-		{
-			buzzer_counter--;
-		}
-
-	  //Check if programing jumper is set
-	  programingModePrevious = programingMode;
-	  programingMode = HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin);
-
-	  //Entering or exiting programing mode will set buzzer on for 1s
-	  if(programingMode != programingModePrevious)
-	  {
-		HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
-		buzzer_counter = BUZZER_TIME_PROGRAMING;
-	  }
-
-	  if(programingMode == false && programingModePrevious == true)
-	  {
-		  if(floorNumberTmp > 0)
-		  {
-			  floorNumber = floorNumberTmp - 1;
-			  floorNumberTmp = 0;
-		  }
-	  }
-
-	  if(programingMode == true)
-	  {
-		  floorIndicatorPrevious = floorIndicator;
-		  floorIndicator = HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin);
-
-		  if(floorIndicator == true && floorIndicatorPrevious == false)
-		  {
-			  floorNumberTmp++;
-		  }
-	  }
-	  else
-	  {
-		  buttonDownStatePrevious = buttonDownState;
-		  buttonUpStatePrevious = buttonUpState;
-
-		  buttonDownState = HAL_GPIO_ReadPin(BUTTON_DOWN_GPIO_Port, BUTTON_DOWN_Pin);
-		  buttonUpState = HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin);
-
-		  if((buttonUpState == true && buttonUpStatePrevious == false) ||
-		     (buttonDownState == true && buttonDownStatePrevious == false))
-		  {
-				HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
-				buzzer_counter = BUZZER_TIME_NORMAL;
-		  }
-	  }
-
-
-	  osDelay(pdMS_TO_TICKS(INPUT_CHECK_TASK_DELAY_MS));
+	buttonsSubTask();
+    osDelay(1);
   }
-  /* USER CODE END InputCheck */
+  /* USER CODE END ButtonsTask */
 }
 
-/* USER CODE BEGIN Header_CanMenager */
+/* USER CODE BEGIN Header_CanTranciver */
 /**
-* @brief Function implementing the CanMenagerT thread.
+* @brief Function implementing the CanTranciverT thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_CanMenager */
-void CanMenager(void *argument)
+/* USER CODE END Header_CanTranciver */
+void CanTranciver(void *argument)
 {
-  /* USER CODE BEGIN CanMenager */
-
+  /* USER CODE BEGIN CanTranciver */
   /* Infinite loop */
   for(;;)
   {
-
     osDelay(1);
   }
-  /* USER CODE END CanMenager */
+  /* USER CODE END CanTranciver */
+}
+
+/* USER CODE BEGIN Header_CanReceiver */
+/**
+* @brief Function implementing the CanReceiverT thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_CanReceiver */
+void CanReceiver(void *argument)
+{
+  /* USER CODE BEGIN CanReceiver */
+  /* Infinite loop */
+  for(;;)
+  {
+	CAN_Message_t msg;
+	if(xQueueReceive(canRxQueue, &msg, portMAX_DELAY) == pdTRUE)
+	{
+		processMessage(&msg);
+	}
+  }
+  /* USER CODE END CanReceiver */
 }
 
 /* Private application code --------------------------------------------------*/

@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cmsis_os2.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -60,23 +60,30 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BUZZER_OUT_Pin GPIO_PIN_9
 #define BUZZER_OUT_GPIO_Port GPIOB
+#define LED_UP_Pin GPIO_PIN_1
+#define LED_UP_GPIO_Port GPIOA
 #define BUTTON_UP_Pin GPIO_PIN_10
 #define BUTTON_UP_GPIO_Port GPIOE
+#define BUTTON_UP_EXTI_IRQn EXTI4_15_IRQn
 #define BUTTON_DOWN_Pin GPIO_PIN_11
 #define BUTTON_DOWN_GPIO_Port GPIOE
-#define PROGRAM_FLOOR_JMP_Pin GPIO_PIN_12
+#define BUTTON_DOWN_EXTI_IRQn EXTI4_15_IRQn
+#define PROGRAM_FLOOR_JMP_Pin GPIO_PIN_13
 #define PROGRAM_FLOOR_JMP_GPIO_Port GPIOE
 #define CAN_OK_Pin GPIO_PIN_2
 #define CAN_OK_GPIO_Port GPIOE
 #define CAN_FAULT_Pin GPIO_PIN_3
 #define CAN_FAULT_GPIO_Port GPIOE
-#define LED_UP_Pin GPIO_PIN_6
-#define LED_UP_GPIO_Port GPIOB
-#define LED_DOWN_Pin GPIO_PIN_7
+#define LED_DOWN_Pin GPIO_PIN_8
 #define LED_DOWN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define false 	0
-#define true	1
+typedef enum
+{
+	true,
+	false
+}bool;
+
+extern osThreadId_t ButtonsTaskTHandle;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

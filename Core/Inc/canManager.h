@@ -9,11 +9,22 @@
 #define INC_CANMANAGER_H_
 
 #include "main.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
-typedef struct {
-    uint32_t ident;  /*!< Standard identifier */
-    uint8_t dlc;     /*!< Data length */
-    uint8_t data[8]; /*!< Received data */
-} CANrxMsg_t;
+extern volatile uint32_t sendID;
+extern volatile uint32_t receiveID;
+
+typedef struct
+{
+   uint32_t id;
+   uint8_t len;
+   uint8_t data[8];
+} CAN_Message_t;
+
+extern QueueHandle_t canRxQueue;
+
+void CAN_InitRTOS(void);
+void processMessage(CAN_Message_t *msg);
 
 #endif /* INC_CANMANAGER_H_ */
