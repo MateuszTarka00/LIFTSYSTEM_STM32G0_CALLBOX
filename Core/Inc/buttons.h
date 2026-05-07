@@ -11,6 +11,9 @@
 #include "main.h"
 #include "FreeRTOS.h"
 
+extern bool upRequest;
+extern bool downRequest;
+
 #define DEBOUNCE_TIME_MS			 	20
 
 typedef struct

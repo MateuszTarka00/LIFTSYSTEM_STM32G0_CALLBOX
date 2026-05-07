@@ -12,6 +12,8 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+#define CAN_MESSAGE_SIZE	4
+
 extern volatile uint32_t sendID;
 extern volatile uint8_t receiveID;
 
@@ -26,5 +28,7 @@ extern QueueHandle_t canRxQueue;
 
 void CAN_InitRTOS(void);
 void processMessage(CAN_Message_t *msg);
+void floorIncrease(void);
+void tranciverFunction(void);
 
 #endif /* INC_CANMANAGER_H_ */

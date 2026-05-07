@@ -99,7 +99,7 @@ void buttonsSubTask(void)
         {
         	if(HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_SET)
         	{
-
+        		floorIncrease();
         	}
         	else
         	{
@@ -114,13 +114,9 @@ void buttonsSubTask(void)
     {
         if(HAL_GPIO_ReadPin(BUTTON_DOWN_GPIO_Port, BUTTON_DOWN_Pin) == GPIO_PIN_SET)
         {
-        	if(HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_SET)
+        	if(HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_RESET)
         	{
-
-        	}
-        	else
-        	{
-        		downRequest = false;
+        		downRequest = true;
         	}
         }
         btnDown.pendingRelease = false;

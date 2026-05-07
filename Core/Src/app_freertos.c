@@ -227,6 +227,7 @@ void CanTranciver(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  tranciverFunction();
     osDelay(1);
   }
   /* USER CODE END CanTranciver */
