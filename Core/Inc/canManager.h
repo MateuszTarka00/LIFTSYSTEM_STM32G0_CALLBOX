@@ -13,7 +13,7 @@
 #include "queue.h"
 
 extern volatile uint32_t sendID;
-extern volatile uint32_t receiveID;
+extern volatile uint8_t receiveID;
 
 typedef struct
 {

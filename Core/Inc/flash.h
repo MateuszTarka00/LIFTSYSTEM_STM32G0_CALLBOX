@@ -12,17 +12,19 @@
 
 typedef struct
 {
-	uint8_t virtualInputs[16][6];
-	uint8_t virtualOutputs[16][6];
-}Flash_virtualInputOutput;
+	uint32_t floorNumberIdSend;
+	uint8_t floorNumberIdReceive;
+}Flash_floorNumberStruct;
 
-extern Flash_virtualInputOutput flash_virtualInputOutput;
+extern Flash_floorNumberStruct flash_floorNumber;
 
 void Flash_ErasePage(uint32_t pageIndex);
-void Flash_WriteStruct(uint32_t pageIndex, const Flash_virtualInputOutput *data);
-void Flash_ReadStruct(uint32_t pageIndex, Flash_virtualInputOutput *data);
+void Flash_WriteStruct(uint32_t pageIndex, const Flash_floorNumberStruct *data);
+void Flash_ReadStruct(uint32_t pageIndex, Flash_floorNumberStruct *data);
 uint32_t Flash_GetPageAddress(uint32_t pageIndex);
-uint8_t checkStructEmpty(const Flash_virtualInputOutput *data);
+uint8_t checkStructEmpty(const Flash_floorNumberStruct *data);
+bool saveValues(void);
+void loadValues(uint32_t *idSend, uint8_t *idReceive);
 
 
 #endif /* INC_FLASH_H_ */
