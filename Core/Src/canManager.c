@@ -184,7 +184,7 @@ void CAN_UpdateLEDs(void)
 
     /* Blink green if traffic present */
 
-    	if(((now - connectedToMasterLastTick) > CONNECTED_TO_MASTER_TIMEOUT) ||
+    	if(((now - connectedToMasterLastTick) > CONNECTED_TO_MASTER_TIMEOUT) || connectedToMasterLastTick == 0 ||
     		HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_SET)
     	{
     	    if ((now - lastBlink) > 200)
@@ -214,15 +214,19 @@ void processMessage(CAN_Message_t *msg)
 	switch(msg->data[2])
 	{
 		case DOWN_BUTTON_THIRD_BYTE_CONST_RX:
+			turnOnOffLight(&upLight, false);
 			turnOnOffLight(&downLight, true);
 			break;
 		case UP_BUTTON_THIRD_BYTE_CONST_RX:
+			turnOnOffLight(&downLight, false);
 			turnOnOffLight(&upLight, true);
 			break;
 		case DOWN_BUTTON_THIRD_BYTE_BLINK_RX:
+			turnOnOffLight(&upLight, false);
 			startLightBlink(&downLight);
 			break;
 		case UP_BUTTON_THIRD_BYTE_BLINK_RX:
+			turnOnOffLight(&downLight, false);
 			startLightBlink(&upLight);
 			break;
 		default:
@@ -242,9 +246,10 @@ void tranciverFunction(void)
 	{
 		if(!connectedToMaster)
 		{
-			if((ticksNow - ticksPrevious) >= TIME_SEND_NOT_CONNECTED)
+			turnOnOffLight(&upLight, false);
+			turnOnOffLight(&downLight, false);
+			if((ticksNow - ticksPrevious) < TIME_SEND_NOT_CONNECTED)
 			{
-				ticksPrevious = ticksNow;
 				return;
 			}
 		}
@@ -262,21 +267,21 @@ void tranciverFunction(void)
 		}
 		else if(downRequest)
 		{
-			message[2] = UP_BUTTON_THIRD_BYTE_TX;
+			message[2] = DOWN_BUTTON_THIRD_BYTE_TX;
 			message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][2];
 
 			FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
 		}
 		else
 		{
-			message[2] = UP_BUTTON_THIRD_BYTE_TX;
 			message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][0];
 
 			FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
 		}
+
+		ticksPrevious = ticksNow;
 	}
 
-	ticksPrevious = ticksNow;
 }
 
 void floorIDSubTask(void)
@@ -305,7 +310,7 @@ void floorIDSubTask(void)
 		}
 	}
 
-	programFloor = prevProgramFloor;
+	prevProgramFloor = programFloor;
 }
 
 void floorIncrease(void)

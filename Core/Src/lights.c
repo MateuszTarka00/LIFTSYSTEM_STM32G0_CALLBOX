@@ -32,7 +32,7 @@ void turnOnOffLight(LightsStruct *light, bool onOff)
 
 void startLightBlink(LightsStruct *light)
 {
-	if(light->timer->start == true)
+	if(light->timer->start != true)
 	{
 		startSoftwareTimer(light->timer);
 	}

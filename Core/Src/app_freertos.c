@@ -63,14 +63,14 @@ const osThreadAttr_t ButtonsTaskT_attributes = {
 osThreadId_t CanTranciverTHandle;
 const osThreadAttr_t CanTranciverT_attributes = {
   .name = "CanTranciverT",
-  .priority = (osPriority_t) osPriorityNormal3,
+  .priority = (osPriority_t) osPriorityNormal1,
   .stack_size = 1024 * 4
 };
 /* Definitions for CanReceiverT */
 osThreadId_t CanReceiverTHandle;
 const osThreadAttr_t CanReceiverT_attributes = {
   .name = "CanReceiverT",
-  .priority = (osPriority_t) osPriorityAboveNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal7,
   .stack_size = 512 * 4
 };
 
@@ -173,6 +173,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  CAN_InitRTOS();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -208,7 +209,9 @@ void ButtonsTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	HAL_IWDG_Refresh(&hiwdg);
+//	HAL_IWDG_Refresh(&hiwdg);
+	floorIDSubTask();
+	CAN_UpdateLEDs();
 	buttonsSubTask();
     osDelay(1);
   }
@@ -228,9 +231,7 @@ void CanTranciver(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  HAL_IWDG_Refresh(&hiwdg);
-	  floorIDSubTask();
-	  CAN_UpdateLEDs();
+//	  HAL_IWDG_Refresh(&hiwdg);
 	  tranciverFunction();
     osDelay(1);
   }
@@ -253,7 +254,7 @@ void CanReceiver(void *argument)
 	CAN_Message_t msg;
 	if(xQueueReceive(canRxQueue, &msg, portMAX_DELAY) == pdTRUE)
 	{
-		HAL_IWDG_Refresh(&hiwdg);
+//		HAL_IWDG_Refresh(&hiwdg);
 		processMessage(&msg);
 	}
   }

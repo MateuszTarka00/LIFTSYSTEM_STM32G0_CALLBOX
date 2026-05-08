@@ -24,12 +24,13 @@
 #include "iwdg.h"
 #include "tim.h"
 #include "gpio.h"
-#include "flash.h"
-#include "canManager.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "flash.h"
+#include "canManager.h"
+#include "softwareTimer_ms.h"
+#include "lights.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,10 +95,14 @@ int main(void)
   MX_GPIO_Init();
   MX_FDCAN2_Init();
   MX_TIM14_Init();
-  MX_IWDG_Init();
+//  MX_IWDG_Init();
   MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
   loadValues(&sendID, &receiveID);
+  initTimers();
+  HAL_TIM_Base_Start_IT(&htim14);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+  HAL_FDCAN_Start(&hfdcan2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -194,7 +199,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM14)
   {
-
+	  timersHandler();
   }
   /* USER CODE END Callback 1 */
 }

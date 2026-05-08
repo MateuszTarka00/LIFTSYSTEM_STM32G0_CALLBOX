@@ -68,7 +68,7 @@ void Error_Handler(void);
 #define BUTTON_DOWN_Pin GPIO_PIN_11
 #define BUTTON_DOWN_GPIO_Port GPIOE
 #define BUTTON_DOWN_EXTI_IRQn EXTI4_15_IRQn
-#define PROGRAM_FLOOR_JMP_Pin GPIO_PIN_13
+#define PROGRAM_FLOOR_JMP_Pin GPIO_PIN_14
 #define PROGRAM_FLOOR_JMP_GPIO_Port GPIOE
 #define CAN_OK_Pin GPIO_PIN_2
 #define CAN_OK_GPIO_Port GPIOE
@@ -79,8 +79,8 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 typedef enum
 {
-	true,
-	false
+	false,
+	true
 }bool;
 
 extern osThreadId_t ButtonsTaskTHandle;

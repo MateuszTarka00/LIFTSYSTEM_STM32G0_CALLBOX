@@ -78,7 +78,7 @@ void buttonsSubTask(void)
 		if(buttonsPressed & BUTTON_DOWN)
 		{
 			btnDown.lastTick = now;
-			btnDown.pendingPress = false;
+			btnDown.pendingPress = true;
 			buttonsPressed &= ~BUTTON_DOWN;
 		}
 
@@ -118,7 +118,7 @@ void buttonsSubTask(void)
 			HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
 			buzzer_counter = BUZZER_TIME;
         }
-        btnUp.pendingRelease = false;
+        btnUp.pendingPress = false;
     }
 
     if(btnDown.pendingPress &&
@@ -134,7 +134,7 @@ void buttonsSubTask(void)
     			buzzer_counter = BUZZER_TIME;
         	}
         }
-        btnDown.pendingRelease = false;
+        btnDown.pendingPress = false;
     }
 
     if(btnUp.pendingRelease && !btnUp.pendingPress &&

@@ -9,7 +9,7 @@
 #include <string.h>
 
 #define FLASH_BASE_ADDR     0x08000000U
-#define FLASH_PAGE 			255
+#define FLASH_PAGE 			127
 
 Flash_floorNumberStruct flash_floorNumber = {};
 
@@ -27,8 +27,9 @@ void Flash_ErasePage(uint32_t pageIndex)
     uint32_t pageError = 0;
 
     eraseInit.TypeErase = FLASH_TYPEERASE_PAGES;
-    eraseInit.Page = pageIndex;
+    eraseInit.Page = pageIndex - 64;
     eraseInit.NbPages = 1;
+    eraseInit.Banks = FLASH_BANK_2;
 
     if (HAL_FLASHEx_Erase(&eraseInit, &pageError) != HAL_OK) {
         // Handle error
@@ -82,8 +83,10 @@ uint8_t checkStructEmpty(const Flash_floorNumberStruct *data)
 
 bool saveValues(void)
 {
+	__disable_irq();
 	Flash_ErasePage(FLASH_PAGE);
 	Flash_WriteStruct(FLASH_PAGE, &flash_floorNumber);
+	__enable_irq();
 }
 
 void loadValues(uint32_t *idSend, uint8_t *idReceive)
@@ -92,8 +95,8 @@ void loadValues(uint32_t *idSend, uint8_t *idReceive)
 
 	if(!checkStructEmpty(&flash_floorNumber))
 	{
-		idSend = flash_floorNumber.floorNumberIdSend;
-		idReceive = flash_floorNumber.floorNumberIdReceive;
+		*idSend = flash_floorNumber.floorNumberIdSend;
+		*idReceive = flash_floorNumber.floorNumberIdReceive;
 	}
 }
 
