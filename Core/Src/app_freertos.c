@@ -30,7 +30,7 @@
 #include "canInputOutputDefinitions.h"
 #include "buttons.h"
 #include "canManager.h"
-
+#include "iwdg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
