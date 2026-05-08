@@ -208,6 +208,7 @@ void ButtonsTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	HAL_IWDG_Refresh(&hiwdg);
 	buttonsSubTask();
     osDelay(1);
   }
@@ -227,6 +228,9 @@ void CanTranciver(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  HAL_IWDG_Refresh(&hiwdg);
+	  floorIDSubTask();
+	  CAN_UpdateLEDs();
 	  tranciverFunction();
     osDelay(1);
   }
@@ -249,6 +253,7 @@ void CanReceiver(void *argument)
 	CAN_Message_t msg;
 	if(xQueueReceive(canRxQueue, &msg, portMAX_DELAY) == pdTRUE)
 	{
+		HAL_IWDG_Refresh(&hiwdg);
 		processMessage(&msg);
 	}
   }

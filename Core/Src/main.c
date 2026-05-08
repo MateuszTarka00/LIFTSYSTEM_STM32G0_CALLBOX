@@ -24,6 +24,8 @@
 #include "iwdg.h"
 #include "tim.h"
 #include "gpio.h"
+#include "flash.h"
+#include "canManager.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,7 +97,7 @@ int main(void)
   MX_IWDG_Init();
   MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
-
+  loadValues(&sendID, &receiveID);
   /* USER CODE END 2 */
 
   /* Init scheduler */

@@ -12,16 +12,21 @@
 #include "lights.h"
 #include "buttons.h"
 
+#define CONNECTED_TO_MASTER_TIMEOUT 2500
+#define TIME_SEND_NOT_CONNECTED		1000
+
 #define FIRST_SEND_ID	 0x200
 #define FIRST_RECEIVE_ID 0x80
 
-volatile uint32_t sendID = 0x200;
-volatile uint8_t receiveID = 0x80;
+uint32_t sendID = 0x200;
+uint8_t receiveID = 0x80;
 
 volatile uint32_t sendIDTmp = 0x200;
 volatile uint8_t receiveIDTmp = 0x80;
 
 static bool connectedToMaster = false;
+
+TickType_t connectedToMasterLastTick = 0;
 
 QueueHandle_t canRxQueue;
 
@@ -142,6 +147,7 @@ void CAN_UpdateLEDs(void)
 
     FDCAN_ProtocolStatusTypeDef status;
     HAL_FDCAN_GetProtocolStatus(&hfdcan2, &status);
+    connectedToMaster = false;
 
     /* --- BUS OFF --- */
     if (status.BusOff)
@@ -178,7 +184,8 @@ void CAN_UpdateLEDs(void)
 
     /* Blink green if traffic present */
 
-    	if(connectedToMaster != true)
+    	if(((now - connectedToMasterLastTick) > CONNECTED_TO_MASTER_TIMEOUT) ||
+    		HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_SET)
     	{
     	    if ((now - lastBlink) > 200)
     	    {
@@ -196,11 +203,14 @@ void CAN_UpdateLEDs(void)
 
 
     setCanLedOK(true);
+    connectedToMaster = true;
 
 }
 
 void processMessage(CAN_Message_t *msg)
 {
+	connectedToMasterLastTick = xTaskGetTickCount();
+
 	switch(msg->data[2])
 	{
 		case DOWN_BUTTON_THIRD_BYTE_CONST_RX:
@@ -221,36 +231,52 @@ void processMessage(CAN_Message_t *msg)
 	}
 }
 
-
 void tranciverFunction(void)
 {
 	uint8_t message[4] = {0x00, 0x0F, 00, 00};
+	static TickType_t ticksPrevious = 0;
+	TickType_t ticksNow = HAL_GetTick();
 
-	if(upRequest && downRequest)
+
+	if(HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_RESET)
 	{
+		if(!connectedToMaster)
+		{
+			if((ticksNow - ticksPrevious) >= TIME_SEND_NOT_CONNECTED)
+			{
+				ticksPrevious = ticksNow;
+				return;
+			}
+		}
 
-	}
-	else if(upRequest)
-	{
-		message[2] = UP_BUTTON_THIRD_BYTE_TX;
-		message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][1];
+		if(upRequest && downRequest)
+		{
 
-		FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
-	}
-	else if(downRequest)
-	{
-		message[2] = UP_BUTTON_THIRD_BYTE_TX;
-		message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][2];
+		}
+		else if(upRequest)
+		{
+			message[2] = UP_BUTTON_THIRD_BYTE_TX;
+			message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][1];
 
-		FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
-	}
-	else
-	{
-		message[2] = UP_BUTTON_THIRD_BYTE_TX;
-		message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][0];
+			FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
+		}
+		else if(downRequest)
+		{
+			message[2] = UP_BUTTON_THIRD_BYTE_TX;
+			message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][2];
 
-		FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
+			FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
+		}
+		else
+		{
+			message[2] = UP_BUTTON_THIRD_BYTE_TX;
+			message[3] = inputCanLastByte[sendID - FIRST_SEND_ID][0];
+
+			FDCAN_Send(sendID, message, CAN_MESSAGE_SIZE);
+		}
 	}
+
+	ticksPrevious = ticksNow;
 }
 
 void floorIDSubTask(void)

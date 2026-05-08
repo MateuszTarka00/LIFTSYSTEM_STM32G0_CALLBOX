@@ -9,9 +9,11 @@
 #include "task.h"
 #include "cmsis_os.h"
 #include "canManager.h"
+#include "tim.h"
 
 #define BUTTON_UP		0x01
 #define BUTTON_DOWN		0x02
+#define BUZZER_TIME						100 //ms
 
 bool upRequest = false;
 bool downRequest = false;
@@ -56,6 +58,13 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
 void buttonsSubTask(void)
 {
 	TickType_t now = xTaskGetTickCount();
+	static uint16_t buzzer_counter = 0;
+
+	if(!buzzer_counter)
+	{
+		HAL_TIM_PWM_Stop(&htim17, TIM_CHANNEL_1);
+		HAL_GPIO_WritePin(BUZZER_OUT_GPIO_Port, BUZZER_OUT_Pin, 0);
+	}
 
 	if(buttonsPressed)
 	{
@@ -105,6 +114,9 @@ void buttonsSubTask(void)
         	{
         		upRequest = true;
         	}
+
+			HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+			buzzer_counter = BUZZER_TIME;
         }
         btnUp.pendingRelease = false;
     }
@@ -117,6 +129,9 @@ void buttonsSubTask(void)
         	if(HAL_GPIO_ReadPin(PROGRAM_FLOOR_JMP_GPIO_Port, PROGRAM_FLOOR_JMP_Pin) == GPIO_PIN_RESET)
         	{
         		downRequest = true;
+
+    			HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+    			buzzer_counter = BUZZER_TIME;
         	}
         }
         btnDown.pendingRelease = false;
